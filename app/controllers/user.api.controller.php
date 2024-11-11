@@ -1,6 +1,6 @@
 <?php
 
-require_once './app/models/usuario.model.php';
+require_once './app/models/usuarios.model.php';
 require_once './app/views/json.view.php';
 require_once './libs/jwt.php';
 

@@ -4,24 +4,67 @@ require_once 'app/models/model.php';
 
 class ProductosModel extends Model{
 
-    function getAllProductos($filterBy, $filterValue, $orderBy, $orderValue, $page, $limit){ // CORREGIR ANTES DE ENTREGAR
+    function getAllProductos($filterBy, $filterValue, $orderBy, $orderValue, $page, $limit){
         $sql = 'SELECT id_producto, nombre_producto, peso, precio, productos.id_marca, imagen_producto, marcas.nombre_marca as nombre_marca FROM productos, marcas WHERE productos.id_marca=marcas.id_marca';
+
+        if($filterBy && $filterValue){
+            switch ($filterBy) {
+                case 'id_producto':
+                    $sql .= ' AND id_producto = ?';
+                    break;
+                case 'nombre_producto':
+                    $sql .= ' AND nombre_producto = ?';
+                    break;
+                case 'peso':
+                    $sql .= ' AND peso = ?';
+                    break;
+                case 'precio':
+                    $sql .= ' AND precio = ?';
+                    break;
+                case 'id_marca':
+                    $sql .= ' AND productos.id_marca = ?';
+                    break;
+                default:
+                    $sql .= ' AND nombre_producto = ?';
+                    break;
+            }
+        }
         
-        if ($filterBy && $filterValue) {
-            $sql .= " WHERE $filterBy = $filterValue";
-          }
-      
-          if ($orderBy && $orderValue) {
-            $sql .= " ORDER BY $orderBy $orderValue";
-          }
-          if (isset($page) && isset($limit)) {
-            $sql .= " LIMIT $page, $limit";
-          }
-
-
+        if($orderBy){
+            switch ($orderBy) {
+                case 'nombre_producto':
+                    $sql .= ' ORDER BY nombre_producto';
+                    break;
+                case 'peso':
+                    $sql .= ' ORDER BY peso';
+                    break;
+                case 'precio':
+                    $sql .= ' ORDER BY precio';
+                    break;
+                case 'id_marca':
+                    $sql .= ' ORDER BY id_marca';
+                    break;
+                default:
+                    $sql .= ' ORDER BY id_producto';
+                    break;
+            }
+            if(isset($orderValue) && $orderValue=='DESC'){
+                $sql .= ' DESC';
+            }else{
+                $sql .= ' ASC';
+            }
+        }
+        
+		if($page && $limit)
+            $sql .= ' LIMIT ' . $limit . ' OFFSET ' . (($page-1)*$limit);
       
         $query = $this->db->prepare($sql);
-        $query->execute();
+        if($filterBy && $filterValue){
+            $query->execute([$filterValue]);
+        }else{
+            $query->execute();
+        }
+
         $productos = $query->fetchAll(PDO::FETCH_OBJ);
         return $productos;
     }
@@ -63,11 +106,11 @@ class ProductosModel extends Model{
         }
     }
 
-    // function deleteProducto($id) {
-    //     $producto = $this->getProductoById($id);
-    //     if ($producto->imagen_producto)
-    //         unlink($producto->imagen_producto);
-    //     $query = $this->db->prepare('DELETE FROM productos WHERE id_producto = ?');
-    //     $query->execute([$id]);
-    // }
+    function deleteProducto($id) {
+        $producto = $this->getProductoById($id);
+        if ($producto->imagen_producto)
+            unlink($producto->imagen_producto);
+        $query = $this->db->prepare('DELETE FROM productos WHERE id_producto = ?');
+        $query->execute([$id]);
+    }
 }
